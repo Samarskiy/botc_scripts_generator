@@ -7,7 +7,8 @@ export type Team =
   | 'minion'
   | 'demon'
   | 'traveller'
-  | 'fabled';
+  | 'fabled'
+  | 'loric';
 
 export type Edition = 'tb' | 'bmr' | 'snv' | 'experimental';
 

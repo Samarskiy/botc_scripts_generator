@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import type { Team, Edition } from '@botc/shared';
 import { loadRoles, getRoleById } from './roles.js';
 
-const TEAMS: Team[] = ['townsfolk', 'outsider', 'minion', 'demon', 'traveller', 'fabled'];
+const TEAMS: Team[] = ['townsfolk', 'outsider', 'minion', 'demon', 'traveller', 'fabled', 'loric'];
 const EDITIONS: Edition[] = ['tb', 'bmr', 'snv', 'experimental'];
 
 test('loads a substantial roster', () => {

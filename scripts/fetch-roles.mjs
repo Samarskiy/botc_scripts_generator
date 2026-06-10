@@ -1,20 +1,21 @@
-// Fetches the canonical Blood on the Clocktower character data (the dataset
-// used by clocktower.online / the official Script Tool) and normalises it into
-// shared/roles.json in our Character schema. Re-run to refresh:  npm run data:roles
+// Fetches the official Blood on the Clocktower character data published by The
+// Pandemonium Institute and normalises it into shared/roles.json in our
+// Character schema. Re-run to refresh:  npm run data:roles
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-const BASE = 'https://raw.githubusercontent.com/bra1n/townsquare/develop/src';
+const BASE =
+  'https://raw.githubusercontent.com/ThePandemoniumInstitute/botc-release/main/resources/data';
 const SOURCES = {
-  roles: `${BASE}/roles.json`,
-  fabled: `${BASE}/fabled.json`,
-  hatred: `${BASE}/hatred.json`,
+  roles: `${BASE}/roles.json`, // characters
+  jinxes: `${BASE}/jinxes.json`, // character interactions
 };
 
 /** Normalise an id to the lowercase alphanumeric form used as role ids. */
 const normId = (s) => String(s).toLowerCase().replace(/[^a-z0-9]/g, '');
 
-const mapTeam = (t) => (t === 'traveler' ? 'traveller' : t);
+// We keep the three base editions; everything else (carousel, fabled, loric)
+// collapses to "experimental" for pool-filtering purposes.
 const mapEdition = (e) => (e === 'tb' || e === 'bmr' || e === 'snv' ? e : 'experimental');
 
 async function getJson(url) {
@@ -24,17 +25,13 @@ async function getJson(url) {
 }
 
 async function main() {
-  const [roles, fabled, hatred] = await Promise.all([
-    getJson(SOURCES.roles),
-    getJson(SOURCES.fabled),
-    getJson(SOURCES.hatred),
-  ]);
+  const [roles, jinxes] = await Promise.all([getJson(SOURCES.roles), getJson(SOURCES.jinxes)]);
 
   // Build a jinx index: roleId -> [{ with, reason }]
   const jinxIndex = new Map();
-  for (const entry of hatred) {
+  for (const entry of jinxes) {
     const from = normId(entry.id);
-    const list = (entry.hatred ?? []).map((h) => ({ with: normId(h.id), reason: h.reason ?? '' }));
+    const list = (entry.jinx ?? []).map((j) => ({ with: normId(j.id), reason: j.reason ?? '' }));
     if (list.length) jinxIndex.set(from, list);
   }
 
@@ -43,28 +40,39 @@ async function main() {
     const c = {
       id,
       name: r.name,
-      team: mapTeam(r.team),
+      team: r.team,
       edition: mapEdition(r.edition),
       ability: r.ability ?? '',
     };
     if (r.setup) c.setup = true;
-    const jinxes = jinxIndex.get(id);
-    if (jinxes?.length) c.jinxes = jinxes;
+    const jinxList = jinxIndex.get(id);
+    if (jinxList?.length) c.jinxes = jinxList;
     return c;
   };
 
   const seen = new Set();
   const characters = [];
-  for (const r of [...roles, ...fabled]) {
+  for (const r of roles) {
+    if (!r?.id || !r?.team || !r?.name) continue;
     const c = toCharacter(r);
-    if (!c.id || seen.has(c.id)) continue;
+    if (seen.has(c.id)) continue;
     seen.add(c.id);
     characters.push(c);
   }
 
   // Stable order: team, then id.
-  const teamOrder = { townsfolk: 0, outsider: 1, minion: 2, demon: 3, traveller: 4, fabled: 5 };
-  characters.sort((a, b) => (teamOrder[a.team] - teamOrder[b.team]) || a.id.localeCompare(b.id));
+  const teamOrder = {
+    townsfolk: 0,
+    outsider: 1,
+    minion: 2,
+    demon: 3,
+    traveller: 4,
+    fabled: 5,
+    loric: 6,
+  };
+  characters.sort(
+    (a, b) => (teamOrder[a.team] ?? 9) - (teamOrder[b.team] ?? 9) || a.id.localeCompare(b.id),
+  );
 
   const out = fileURLToPath(new URL('../shared/roles.json', import.meta.url));
   writeFileSync(out, JSON.stringify(characters, null, 2) + '\n');
