@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { config, hasApiKey } from './config.js';
 import { generateRouter } from './routes/generate.js';
+import { rolesRouter } from './routes/roles.js';
 
 const app = express();
 app.use(express.json({ limit: '1mb' }));
@@ -13,6 +14,7 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.use('/api', generateRouter);
+app.use('/api', rolesRouter);
 // Routes for /api/export are mounted in a later phase.
 
 // In production, serve the built client.
