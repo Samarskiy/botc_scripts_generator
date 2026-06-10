@@ -14,7 +14,8 @@
     "dev:client": "npm run dev --workspace client",
     "build": "npm run build --workspace client && npm run build --workspace server",
     "start": "npm run start --workspace server",
-    "test": "npm run test --workspaces --if-present"
+    "test": "npm run test --workspaces --if-present",
+    "data:roles": "node scripts/fetch-roles.mjs"
   },
   "devDependencies": {
     "concurrently": "^9.1.0"
