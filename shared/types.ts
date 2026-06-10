@@ -32,10 +32,19 @@ export interface Character {
   jinxes?: Jinx[];
   /** Whether the character modifies the game's setup counts (e.g. Baron). */
   setup?: boolean;
+  /** Storyteller reminder text for the wake order. */
+  firstNightReminder?: string;
+  otherNightReminder?: string;
   /** Icon URL/path for PDF rendering. */
   icon?: string;
   /** True for user-defined homebrew characters. */
   homebrew?: boolean;
+}
+
+/** Canonical wake order as lists of ids (including meta steps like dusk/dawn). */
+export interface NightOrder {
+  firstNight: string[];
+  otherNight: string[];
 }
 
 // ---- Generation request / response ----

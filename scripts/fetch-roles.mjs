@@ -9,6 +9,7 @@ const BASE =
 const SOURCES = {
   roles: `${BASE}/roles.json`, // characters
   jinxes: `${BASE}/jinxes.json`, // character interactions
+  nightsheet: `${BASE}/nightsheet.json`, // canonical wake order { firstNight, otherNight }
 };
 
 /** Normalise an id to the lowercase alphanumeric form used as role ids. */
@@ -25,7 +26,11 @@ async function getJson(url) {
 }
 
 async function main() {
-  const [roles, jinxes] = await Promise.all([getJson(SOURCES.roles), getJson(SOURCES.jinxes)]);
+  const [roles, jinxes, nightsheet] = await Promise.all([
+    getJson(SOURCES.roles),
+    getJson(SOURCES.jinxes),
+    getJson(SOURCES.nightsheet),
+  ]);
 
   // Build a jinx index: roleId -> [{ with, reason }]
   const jinxIndex = new Map();
@@ -45,6 +50,8 @@ async function main() {
       ability: r.ability ?? '',
     };
     if (r.setup) c.setup = true;
+    if (r.firstNightReminder) c.firstNightReminder = r.firstNightReminder;
+    if (r.otherNightReminder) c.otherNightReminder = r.otherNightReminder;
     const jinxList = jinxIndex.get(id);
     if (jinxList?.length) c.jinxes = jinxList;
     return c;
@@ -77,8 +84,19 @@ async function main() {
   const out = fileURLToPath(new URL('../shared/roles.json', import.meta.url));
   writeFileSync(out, JSON.stringify(characters, null, 2) + '\n');
 
+  // Canonical wake order (ids, including meta steps dusk/minioninfo/demoninfo/dawn).
+  const nightOrder = {
+    firstNight: (nightsheet.firstNight ?? []).map(normId),
+    otherNight: (nightsheet.otherNight ?? []).map(normId),
+  };
+  const nightOut = fileURLToPath(new URL('../shared/nightorder.json', import.meta.url));
+  writeFileSync(nightOut, JSON.stringify(nightOrder, null, 2) + '\n');
+
   const byTeam = characters.reduce((m, c) => ((m[c.team] = (m[c.team] ?? 0) + 1), m), {});
   console.log(`Wrote ${characters.length} characters to ${out}`);
+  console.log(
+    `Wrote night order (${nightOrder.firstNight.length} first / ${nightOrder.otherNight.length} other) to ${nightOut}`,
+  );
   console.log('By team:', byTeam);
 }
 
