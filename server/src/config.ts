@@ -1,4 +1,9 @@
-import 'dotenv/config';
+import { config as loadDotenv } from 'dotenv';
+import { fileURLToPath } from 'node:url';
+
+// The dev server runs with cwd = server/, but .env lives at the repo root
+// (two levels up from this module in both dev and prod). Load it explicitly.
+loadDotenv({ path: fileURLToPath(new URL('../../.env', import.meta.url)) });
 
 /** Central runtime configuration, sourced from environment with sane defaults. */
 export const config = {
