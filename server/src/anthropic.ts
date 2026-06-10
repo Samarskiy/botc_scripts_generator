@@ -4,6 +4,7 @@ import type { LlmClient, GenerateInput, EvaluateInput } from './engine/llm.js';
 import type { GenerationResult } from './engine/schemas.js';
 import { generationTool, evaluationTool } from './engine/schemas.js';
 import { SYSTEM_PROMPT, buildGenerationMessages, buildEvaluationMessages } from './engine/prompts.js';
+import { normalizeGeneration, normalizeEvaluation } from './engine/normalize.js';
 import { config } from './config.js';
 
 /**
@@ -30,7 +31,7 @@ export class AnthropicLlmClient implements LlmClient {
       tool_choice: { type: 'tool', name: generationTool.name },
       messages: buildGenerationMessages(input),
     });
-    return extractToolInput<GenerationResult>(res, generationTool.name);
+    return normalizeGeneration(extractToolInput(res, generationTool.name));
   }
 
   async evaluate(input: EvaluateInput): Promise<EvaluationResult> {
@@ -42,14 +43,14 @@ export class AnthropicLlmClient implements LlmClient {
       tool_choice: { type: 'tool', name: evaluationTool.name },
       messages: buildEvaluationMessages(input),
     });
-    return extractToolInput<EvaluationResult>(res, evaluationTool.name);
+    return normalizeEvaluation(extractToolInput(res, evaluationTool.name));
   }
 }
 
-function extractToolInput<T>(res: Anthropic.Message, toolName: string): T {
+function extractToolInput(res: Anthropic.Message, toolName: string): unknown {
   const block = res.content.find((b) => b.type === 'tool_use' && b.name === toolName);
   if (!block || block.type !== 'tool_use') {
     throw new Error(`Модель не повернула очікуваний виклик інструмента «${toolName}»`);
   }
-  return block.input as T;
+  return block.input;
 }
