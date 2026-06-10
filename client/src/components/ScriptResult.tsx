@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import type { GenerateResult } from '@botc/shared';
-import { downloadScriptJson } from '../lib/exportJson.js';
+import { downloadExport } from '../lib/exportJson.js';
 
 const TEAM_ORDER = ['townsfolk', 'outsider', 'minion', 'demon', 'traveller', 'fabled', 'loric'];
 const TEAM_LABEL: Record<string, string> = {
@@ -32,6 +33,7 @@ interface Props {
 
 export function ScriptResult({ result, busy, onRefine, onRegenerate }: Props) {
   const { script, evaluation, belowThreshold } = result;
+  const [exporting, setExporting] = useState<'json' | 'pdf' | null>(null);
   const groups = TEAM_ORDER.map((t) => ({
     team: t,
     chars: script.characters.filter((c) => c.team === t),
@@ -40,6 +42,17 @@ export function ScriptResult({ result, busy, onRefine, onRegenerate }: Props) {
   const refine = () => {
     const note = window.prompt('Що покращити? (необов’язково)') ?? '';
     onRefine(note);
+  };
+
+  const exportAs = async (format: 'json' | 'pdf') => {
+    setExporting(format);
+    try {
+      await downloadExport(script, format);
+    } catch (e) {
+      alert(String(e instanceof Error ? e.message : e));
+    } finally {
+      setExporting(null);
+    }
   };
 
   return (
@@ -95,11 +108,11 @@ export function ScriptResult({ result, busy, onRefine, onRegenerate }: Props) {
       </div>
 
       <div className="actions">
-        <button className="btn" onClick={() => downloadScriptJson(script)}>
-          ⬇ JSON
+        <button className="btn" onClick={() => exportAs('json')} disabled={exporting !== null}>
+          {exporting === 'json' ? '…' : '⬇ JSON'}
         </button>
-        <button className="btn" disabled title="З'явиться у Фазі 7">
-          ⬇ PDF (скоро)
+        <button className="btn" onClick={() => exportAs('pdf')} disabled={exporting !== null}>
+          {exporting === 'pdf' ? 'Готуємо PDF…' : '⬇ PDF'}
         </button>
         <button className="btn ghost" onClick={refine} disabled={busy}>
           ↻ Доопрацювати
