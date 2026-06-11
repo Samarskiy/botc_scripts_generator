@@ -1,14 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
-import type { GenerateRequest, ProgressEvent, GenerateResult } from '@botc/shared';
+import type { GenerateRequest, ProgressEvent, GenerateResult, Character } from '@botc/shared';
 import { fetchRoles, streamGenerate, type RoleLite } from './lib/api.js';
+import { loadHomebrew } from './lib/homebrew.js';
 import { ConceptForm } from './components/ConceptForm.js';
+import { HomebrewManager } from './components/HomebrewManager.js';
 import { GenerationProgress } from './components/GenerationProgress.js';
 import { ScriptResult } from './components/ScriptResult.js';
 
-type View = 'form' | 'running' | 'result';
+type View = 'form' | 'running' | 'result' | 'homebrew';
 
 export function App() {
   const [roles, setRoles] = useState<RoleLite[]>([]);
+  const [homebrew, setHomebrew] = useState<Character[]>([]);
   const [view, setView] = useState<View>('form');
   const [events, setEvents] = useState<ProgressEvent[]>([]);
   const [result, setResult] = useState<GenerateResult | null>(null);
@@ -20,6 +23,7 @@ export function App() {
     fetchRoles()
       .then(setRoles)
       .catch(() => setRoles([]));
+    setHomebrew(loadHomebrew());
   }, []);
 
   const run = async (request: GenerateRequest) => {
@@ -63,10 +67,16 @@ export function App() {
       {view === 'form' && (
         <ConceptForm
           roles={roles}
+          homebrew={homebrew}
           busy={false}
           onSubmit={run}
+          onOpenHomebrew={() => setView('homebrew')}
           initial={lastRequest.current ?? undefined}
         />
+      )}
+
+      {view === 'homebrew' && (
+        <HomebrewManager homebrew={homebrew} onChange={setHomebrew} onBack={() => setView('form')} />
       )}
 
       {view === 'running' && <GenerationProgress events={events} />}
@@ -87,7 +97,7 @@ export function App() {
           )
         ))}
 
-      {view !== 'form' && (
+      {(view === 'running' || view === 'result') && (
         <button className="btn ghost back" onClick={() => setView('form')}>
           ← Новий скрипт
         </button>

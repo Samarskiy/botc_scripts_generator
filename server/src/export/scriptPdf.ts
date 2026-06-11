@@ -52,9 +52,15 @@ const META: Record<string, { label: string; first?: string; other?: string }> = 
   },
 };
 
+/** Decode a `data:image/...;base64,...` URL into a Buffer, or null. */
+function dataUrlToBuffer(url: string): Buffer | null {
+  const m = /^data:[^;]+;base64,(.+)$/.exec(url);
+  return m ? Buffer.from(m[1], 'base64') : null;
+}
+
 // Strip dataset markup from reminder text: ":reminder:" placeholders and
 // "*WORD*" emphasis markers.
-const cleanReminder = (s: string): string =>
+export const cleanReminder = (s: string): string =>
   s
     .replace(/:reminder:/g, '')
     .replace(/\*(.*?)\*/g, '$1')
@@ -79,7 +85,14 @@ async function getIcon(id: string): Promise<Buffer | null> {
 /** Render a printable, official-style script roster (with night order) as a PDF. */
 export async function renderScriptPdf(script: Script): Promise<Buffer> {
   const icons = new Map<string, Buffer | null>();
-  await Promise.all(script.characters.map(async (c) => icons.set(c.id, await getIcon(c.id))));
+  await Promise.all(
+    script.characters.map(async (c) => {
+      // Homebrew uses its uploaded data-URL icon; official roles fetch by id.
+      const buf =
+        c.homebrew && c.icon?.startsWith('data:') ? dataUrlToBuffer(c.icon) : await getIcon(c.id);
+      icons.set(c.id, buf);
+    }),
+  );
 
   const roleById = new Map(loadRoles().map((c) => [c.id, c]));
   const nightOrder = loadNightOrder();

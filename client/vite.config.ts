@@ -1,4 +1,5 @@
-import { defineConfig } from 'vite';
+/// <reference types="vitest/config" />
+import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 
 // The server runs on 5174; proxy /api there during development.
@@ -13,5 +14,9 @@ export default defineConfig({
   // @botc/shared resolves to TypeScript source via a workspace symlink.
   optimizeDeps: {
     exclude: ['@botc/shared'],
+  },
+  test: {
+    environment: 'jsdom',
+    globals: true,
   },
 });

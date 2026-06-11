@@ -148,3 +148,18 @@ test('buildPool throws InfeasibleError when the pool lacks a demon', () => {
   const noDemons = ROSTER.filter((c) => c.team !== 'demon');
   assert.throws(() => buildPool(REQUEST, noDemons), InfeasibleError);
 });
+
+test('buildPool includes homebrew only when includeHomebrew is set', () => {
+  const hb: Character = {
+    id: 'hb_x',
+    name: 'X',
+    team: 'townsfolk',
+    edition: 'experimental',
+    ability: 'a',
+    homebrew: true,
+  };
+  const withHb = buildPool({ ...REQUEST, includeHomebrew: true, homebrew: [hb] }, ROSTER);
+  assert.ok(withHb.some((c) => c.id === 'hb_x'));
+  const withoutHb = buildPool({ ...REQUEST, includeHomebrew: false, homebrew: [hb] }, ROSTER);
+  assert.ok(!withoutHb.some((c) => c.id === 'hb_x'));
+});

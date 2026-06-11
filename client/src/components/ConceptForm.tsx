@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
-import type { GenerateRequest, Edition, Complexity } from '@botc/shared';
+import type { GenerateRequest, Edition, Complexity, Character } from '@botc/shared';
 import type { RoleLite } from '../lib/api.js';
 import { RoleSelect } from './RoleSelect.js';
 
@@ -19,19 +19,31 @@ const COMPLEXITIES: { id: Complexity; label: string }[] = [
 
 interface Props {
   roles: RoleLite[];
+  homebrew: Character[];
   busy: boolean;
   onSubmit: (r: GenerateRequest) => void;
+  onOpenHomebrew: () => void;
   initial?: Partial<GenerateRequest>;
 }
 
-export function ConceptForm({ roles, busy, onSubmit, initial }: Props) {
+export function ConceptForm({ roles, homebrew, busy, onSubmit, onOpenHomebrew, initial }: Props) {
   const [concept, setConcept] = useState(initial?.concept ?? '');
   const [min, setMin] = useState(initial?.players?.min ?? 7);
   const [max, setMax] = useState(initial?.players?.max ?? 12);
   const [complexity, setComplexity] = useState<Complexity>(initial?.complexity ?? 'medium');
   const [editions, setEditions] = useState<Edition[]>(initial?.editions ?? ['tb', 'bmr', 'snv']);
+  const [includeHomebrew, setIncludeHomebrew] = useState(initial?.includeHomebrew ?? false);
   const [mustInclude, setMustInclude] = useState<string[]>(initial?.mustInclude ?? []);
   const [exclude, setExclude] = useState<string[]>(initial?.exclude ?? []);
+
+  // Homebrew characters appear in the pickers only when they're included.
+  const pickerRoles = useMemo<RoleLite[]>(
+    () =>
+      includeHomebrew && homebrew.length
+        ? [...roles, ...homebrew.map((c) => ({ id: c.id, name: c.name, team: c.team, edition: c.edition }))]
+        : roles,
+    [roles, homebrew, includeHomebrew],
+  );
 
   const toggleEdition = (e: Edition) =>
     setEditions((prev) => (prev.includes(e) ? prev.filter((x) => x !== e) : [...prev, e]));
@@ -47,10 +59,10 @@ export function ConceptForm({ roles, busy, onSubmit, initial }: Props) {
       players: { min, max },
       complexity,
       editions,
-      includeHomebrew: false,
+      includeHomebrew,
       mustInclude,
       exclude,
-      homebrew: [],
+      homebrew,
     });
   };
 
@@ -124,8 +136,26 @@ export function ConceptForm({ roles, busy, onSubmit, initial }: Props) {
         </div>
       </div>
 
-      <RoleSelect roles={roles} value={mustInclude} onChange={setMustInclude} label="Обов'язково включити" accent="on" />
-      <RoleSelect roles={roles} value={exclude} onChange={setExclude} label="Виключити" accent="ex" />
+      <div className="fld">
+        <label>Хоумбрю</label>
+        <div className="checks">
+          <label className={`check ${includeHomebrew ? 'on' : ''}`}>
+            <input
+              type="checkbox"
+              checked={includeHomebrew}
+              onChange={() => setIncludeHomebrew((v) => !v)}
+              disabled={homebrew.length === 0}
+            />
+            Включити власні ролі ({homebrew.length})
+          </label>
+          <button type="button" className="btn ghost" onClick={onOpenHomebrew}>
+            ⚙ Керувати хоумбрю
+          </button>
+        </div>
+      </div>
+
+      <RoleSelect roles={pickerRoles} value={mustInclude} onChange={setMustInclude} label="Обов'язково включити" accent="on" />
+      <RoleSelect roles={pickerRoles} value={exclude} onChange={setExclude} label="Виключити" accent="ex" />
 
       <button className="btn primary" type="submit" disabled={!valid || busy}>
         ✨ Згенерувати скрипт
