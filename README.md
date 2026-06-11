@@ -245,13 +245,9 @@ personal utility and is not affiliated with or endorsed by them.
 
 ---
 
-## Status & roadmap
+## Status
 
 Working end to end: concept → generation (streamed) → balance report → export
-(JSON + PDF) → refine / regenerate.
-
-Not yet built (optional next steps):
-
-- **Homebrew manager** — add custom characters via the UI (`includeHomebrew` is
-  currently disabled).
-- **Broader tests** — frontend component tests and a light end-to-end pass.
+(JSON + PDF with night order) → refine / regenerate. Custom **homebrew**
+characters can be added in the UI (stored locally) and included in generation
+and export. Covered by server and client (vitest) test suites.
