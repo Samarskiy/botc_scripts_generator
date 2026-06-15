@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import type { GenerateRequest, ProgressEvent, GenerateResult, Character } from '@botc/shared';
-import { fetchRoles, streamGenerate, type RoleLite } from './lib/api.js';
+import { fetchHealth, fetchRoles, streamGenerate, type RoleLite } from './lib/api.js';
 import { loadHomebrew } from './lib/homebrew.js';
 import { ConceptForm } from './components/ConceptForm.js';
 import { HomebrewManager } from './components/HomebrewManager.js';
 import { GenerationProgress } from './components/GenerationProgress.js';
 import { ScriptResult } from './components/ScriptResult.js';
+import { SetupBanner } from './components/SetupBanner.js';
 
 type View = 'form' | 'running' | 'result' | 'homebrew';
 
@@ -16,6 +17,7 @@ export function App() {
   const [events, setEvents] = useState<ProgressEvent[]>([]);
   const [result, setResult] = useState<GenerateResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [keyConfigured, setKeyConfigured] = useState<boolean | null>(null);
   const lastRequest = useRef<GenerateRequest | null>(null);
   const abort = useRef<AbortController | null>(null);
 
@@ -24,6 +26,9 @@ export function App() {
       .then(setRoles)
       .catch(() => setRoles([]));
     setHomebrew(loadHomebrew());
+    fetchHealth()
+      .then((h) => setKeyConfigured(h.hasApiKey))
+      .catch(() => setKeyConfigured(null));
   }, []);
 
   const run = async (request: GenerateRequest) => {
@@ -63,6 +68,8 @@ export function App() {
   return (
     <main className="shell">
       <h1>🎲 BotC — Генератор збалансованих скриптів</h1>
+
+      {keyConfigured === false && <SetupBanner />}
 
       {view === 'form' && (
         <ConceptForm

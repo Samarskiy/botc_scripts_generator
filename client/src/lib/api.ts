@@ -2,6 +2,18 @@ import type { GenerateRequest, ProgressEvent, Character } from '@botc/shared';
 
 export type RoleLite = Pick<Character, 'id' | 'name' | 'team' | 'edition'>;
 
+export interface Health {
+  status: string;
+  hasApiKey: boolean;
+  model: string;
+}
+
+export async function fetchHealth(): Promise<Health> {
+  const res = await fetch('/api/health');
+  if (!res.ok) throw new Error('Бекенд недоступний');
+  return res.json();
+}
+
 export async function fetchRoles(): Promise<RoleLite[]> {
   const res = await fetch('/api/roles');
   if (!res.ok) throw new Error('Не вдалося завантажити список персонажів');
