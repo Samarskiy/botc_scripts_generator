@@ -27,9 +27,7 @@ export function RoleSelect({ roles, value, onChange, label, accent }: Props) {
   const matches = useMemo(() => {
     const q = query.trim().toLowerCase();
     const chosen = new Set(value);
-    return roles
-      .filter((r) => !chosen.has(r.id) && (q === '' || r.name.toLowerCase().includes(q)))
-      .slice(0, 40);
+    return roles.filter((r) => !chosen.has(r.id) && (q === '' || r.name.toLowerCase().includes(q)));
   }, [roles, query, value]);
 
   const add = (id: string) => {
