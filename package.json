@@ -16,9 +16,11 @@
     "start": "npm run start --workspace server",
     "test": "npm run test --workspaces --if-present",
     "data:roles": "node scripts/fetch-roles.mjs",
-    "data:assets": "node scripts/fetch-assets.mjs"
+    "data:assets": "node scripts/fetch-assets.mjs",
+    "data:icons": "node scripts/fetch-icons.mjs"
   },
   "devDependencies": {
-    "concurrently": "^9.1.0"
+    "concurrently": "^9.1.0",
+    "sharp": "^0.35.1"
   }
 }

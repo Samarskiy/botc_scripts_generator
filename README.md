@@ -221,6 +221,7 @@ All settings are environment variables (see `.env.example`):
 | `npm test`             | Run the server test suite (`node --test` via `tsx`).     |
 | `npm run data:roles`   | Re-fetch & normalise characters + night order from the official dataset. |
 | `npm run data:assets`  | Re-download the bundled PDF font into `server/assets/`.  |
+| `npm run data:icons`   | Bundle PNG role icons not covered by the runtime source (loric/fabled/newer experimental), converted from the official webp set. |
 
 ---
 

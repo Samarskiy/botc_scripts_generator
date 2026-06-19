@@ -1,3 +1,4 @@
+import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import PDFDocument from 'pdfkit';
 import type { Script, Character } from '@botc/shared';
@@ -7,6 +8,7 @@ import { loadNightOrder } from '../data/nightorder.js';
 const ICON_BASE =
   'https://raw.githubusercontent.com/bra1n/townsquare/develop/src/assets/icons/';
 const FONT_PATH = fileURLToPath(new URL('../../assets/NotoSans-Regular.ttf', import.meta.url));
+const LOCAL_ICON_DIR = fileURLToPath(new URL('../../assets/icons/', import.meta.url));
 
 const TEAM_ORDER = ['townsfolk', 'outsider', 'minion', 'demon', 'traveller', 'fabled', 'loric'];
 const TEAM_LABEL: Record<string, string> = {
@@ -67,16 +69,28 @@ export const cleanReminder = (s: string): string =>
     .replace(/\s+/g, ' ')
     .trim();
 
-// Icons are fetched once per process and memoised (null = unavailable).
+// Icons are resolved once per process and memoised (null = unavailable).
+// Locally bundled icons (loric/fabled/newer experimental) take priority; the
+// rest are fetched from townsquare at runtime.
 const iconCache = new Map<string, Buffer | null>();
 async function getIcon(id: string): Promise<Buffer | null> {
   if (iconCache.has(id)) return iconCache.get(id)!;
   let buf: Buffer | null = null;
-  try {
-    const res = await fetch(`${ICON_BASE}${id}.png`, { signal: AbortSignal.timeout(5000) });
-    if (res.ok) buf = Buffer.from(await res.arrayBuffer());
-  } catch {
-    /* fall back to placeholder */
+  const local = `${LOCAL_ICON_DIR}${id}.png`;
+  if (existsSync(local)) {
+    try {
+      buf = readFileSync(local);
+    } catch {
+      /* fall through */
+    }
+  }
+  if (!buf) {
+    try {
+      const res = await fetch(`${ICON_BASE}${id}.png`, { signal: AbortSignal.timeout(5000) });
+      if (res.ok) buf = Buffer.from(await res.arrayBuffer());
+    } catch {
+      /* fall back to placeholder */
+    }
   }
   iconCache.set(id, buf);
   return buf;
