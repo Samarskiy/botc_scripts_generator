@@ -40,7 +40,17 @@ export function ConceptForm({ roles, homebrew, busy, onSubmit, onOpenHomebrew, i
   const pickerRoles = useMemo<RoleLite[]>(
     () =>
       includeHomebrew && homebrew.length
-        ? [...roles, ...homebrew.map((c) => ({ id: c.id, name: c.name, team: c.team, edition: c.edition }))]
+        ? [
+            ...roles,
+            ...homebrew.map((c) => ({
+              id: c.id,
+              name: c.name,
+              team: c.team,
+              edition: c.edition,
+              ability: c.ability,
+              icon: c.icon,
+            })),
+          ]
         : roles,
     [roles, homebrew, includeHomebrew],
   );

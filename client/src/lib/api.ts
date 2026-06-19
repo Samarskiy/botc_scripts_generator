@@ -1,6 +1,9 @@
 import type { GenerateRequest, ProgressEvent, Character } from '@botc/shared';
 
-export type RoleLite = Pick<Character, 'id' | 'name' | 'team' | 'edition'>;
+export type RoleLite = Pick<Character, 'id' | 'name' | 'team' | 'edition' | 'ability'> & {
+  /** data-URL icon for homebrew; official roles use /api/icon/:id. */
+  icon?: string;
+};
 
 export interface Health {
   status: string;

@@ -1,14 +1,11 @@
-import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import PDFDocument from 'pdfkit';
 import type { Script, Character } from '@botc/shared';
 import { loadRoles } from '../data/roles.js';
 import { loadNightOrder } from '../data/nightorder.js';
+import { resolveIcon } from '../icons.js';
 
-const ICON_BASE =
-  'https://raw.githubusercontent.com/bra1n/townsquare/develop/src/assets/icons/';
 const FONT_PATH = fileURLToPath(new URL('../../assets/NotoSans-Regular.ttf', import.meta.url));
-const LOCAL_ICON_DIR = fileURLToPath(new URL('../../assets/icons/', import.meta.url));
 
 const TEAM_ORDER = ['townsfolk', 'outsider', 'minion', 'demon', 'traveller', 'fabled', 'loric'];
 const TEAM_LABEL: Record<string, string> = {
@@ -69,33 +66,6 @@ export const cleanReminder = (s: string): string =>
     .replace(/\s+/g, ' ')
     .trim();
 
-// Icons are resolved once per process and memoised (null = unavailable).
-// Locally bundled icons (loric/fabled/newer experimental) take priority; the
-// rest are fetched from townsquare at runtime.
-const iconCache = new Map<string, Buffer | null>();
-async function getIcon(id: string): Promise<Buffer | null> {
-  if (iconCache.has(id)) return iconCache.get(id)!;
-  let buf: Buffer | null = null;
-  const local = `${LOCAL_ICON_DIR}${id}.png`;
-  if (existsSync(local)) {
-    try {
-      buf = readFileSync(local);
-    } catch {
-      /* fall through */
-    }
-  }
-  if (!buf) {
-    try {
-      const res = await fetch(`${ICON_BASE}${id}.png`, { signal: AbortSignal.timeout(5000) });
-      if (res.ok) buf = Buffer.from(await res.arrayBuffer());
-    } catch {
-      /* fall back to placeholder */
-    }
-  }
-  iconCache.set(id, buf);
-  return buf;
-}
-
 /** Render a printable, official-style script roster (with night order) as a PDF. */
 export async function renderScriptPdf(script: Script): Promise<Buffer> {
   const icons = new Map<string, Buffer | null>();
@@ -103,7 +73,7 @@ export async function renderScriptPdf(script: Script): Promise<Buffer> {
     script.characters.map(async (c) => {
       // Homebrew uses its uploaded data-URL icon; official roles fetch by id.
       const buf =
-        c.homebrew && c.icon?.startsWith('data:') ? dataUrlToBuffer(c.icon) : await getIcon(c.id);
+        c.homebrew && c.icon?.startsWith('data:') ? dataUrlToBuffer(c.icon) : await resolveIcon(c.id);
       icons.set(c.id, buf);
     }),
   );
