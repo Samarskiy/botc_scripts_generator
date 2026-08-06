@@ -67,7 +67,14 @@ export function App() {
 
   return (
     <main className="shell">
-      <h1>🎲 BotC — Генератор збалансованих скриптів</h1>
+      <header className="masthead">
+        <p className="eyebrow">Blood on the Clocktower · генератор сценаріїв</p>
+        <h1>Складіть свій скрипт</h1>
+        <p className="lede">
+          Опишіть задум — і отримайте збалансований набір ролей, готовий до імпорту та друку.
+        </p>
+        <div className="rule" />
+      </header>
 
       {keyConfigured === false && <SetupBanner />}
 

@@ -78,7 +78,7 @@ export function ConceptForm({ roles, homebrew, busy, onSubmit, onOpenHomebrew, i
 
   return (
     <form className="card form" onSubmit={submit}>
-      <h2>Новий скрипт</h2>
+      <h2>Задум і межі</h2>
 
       <div className="fld">
         <label>Концепт / тема</label>
