@@ -7,6 +7,7 @@ import { HomebrewManager } from './components/HomebrewManager.js';
 import { GenerationProgress } from './components/GenerationProgress.js';
 import { ScriptResult } from './components/ScriptResult.js';
 import { SetupBanner } from './components/SetupBanner.js';
+import { Backdrop } from './components/Backdrop.js';
 
 type View = 'form' | 'running' | 'result' | 'homebrew';
 
@@ -66,8 +67,10 @@ export function App() {
   };
 
   return (
-    <main className="shell">
-      <header className="masthead">
+    <>
+      <Backdrop />
+      <main className="shell">
+        <header className="masthead">
         <p className="eyebrow">Blood on the Clocktower · генератор сценаріїв</p>
         <h1>Складіть свій скрипт</h1>
         <p className="lede">
@@ -111,11 +114,12 @@ export function App() {
           )
         ))}
 
-      {(view === 'running' || view === 'result') && (
-        <button className="btn ghost back" onClick={() => setView('form')}>
-          ← Новий скрипт
-        </button>
-      )}
-    </main>
+        {(view === 'running' || view === 'result') && (
+          <button className="btn ghost back" onClick={() => setView('form')}>
+            ← Новий скрипт
+          </button>
+        )}
+      </main>
+    </>
   );
 }
