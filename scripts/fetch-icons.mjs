@@ -1,6 +1,6 @@
-// Bundles PNG role icons that the runtime townsquare source doesn't cover
-// (loric, fabled, newer experimental). Sources the official Pandemonium webp
-// icons and converts them to PNG (pdfkit can't embed webp). Re-run with:
+// Bundles a PNG icon for every character so the app never depends on the
+// network at runtime. Prefers the official Pandemonium webp set (converted to
+// PNG — pdfkit can't embed webp) and falls back to townsquare. Re-run with:
 //   npm run data:icons
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -74,11 +74,12 @@ async function wrongAlignmentColour(png, team) {
   return `expected ${evil ? 'red' : 'blue'}, got avg red ${(r / n) | 0} / blue ${(b / n) | 0}`;
 }
 
-async function townsquareHas(id) {
+async function townsquareIcon(id) {
   try {
-    return (await fetch(`${TS}${id}.png`)).ok;
+    const res = await fetch(`${TS}${id}.png`);
+    return res.ok ? Buffer.from(await res.arrayBuffer()) : null;
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -87,24 +88,27 @@ async function main() {
   const outDir = fileURLToPath(new URL('../server/assets/icons/', import.meta.url));
   mkdirSync(outDir, { recursive: true });
 
-  const coverage = await Promise.all(
-    roles.map(async (c) => [c.id, await townsquareHas(c.id)]),
-  );
-  const onTownsquare = new Set(coverage.filter(([, ok]) => ok).map(([id]) => id));
-
   let bundled = 0;
+  let fromTownsquare = 0;
   const missing = [];
   const miscoloured = [];
+
   for (const c of roles) {
-    if (onTownsquare.has(c.id)) continue; // fetched from townsquare at runtime
-    const entry = index.get(c.id);
-    const url = entry && pickVariant(entry, c.team);
-    if (!url) {
+    // Official set first (it carries the good/evil variants), townsquare after.
+    const url = pickVariant(index.get(c.id) ?? {}, c.team);
+    let source = null;
+    if (url) {
+      source = Buffer.from(await (await fetch(url)).arrayBuffer());
+    } else {
+      source = await townsquareIcon(c.id);
+      if (source) fromTownsquare++;
+    }
+    if (!source) {
       missing.push(c.id);
       continue;
     }
-    const webp = Buffer.from(await (await fetch(url)).arrayBuffer());
-    const png = await sharp(webp).resize(160, 160, { fit: 'inside' }).png().toBuffer();
+
+    const png = await sharp(source).resize(160, 160, { fit: 'inside' }).png().toBuffer();
     writeFileSync(`${outDir}${c.id}.png`, png);
     bundled++;
 
@@ -112,8 +116,8 @@ async function main() {
     if (wrong) miscoloured.push(`${c.id} (${c.team}) — ${wrong}`);
   }
 
-  console.log(`Bundled ${bundled} icons to ${outDir}`);
-  console.log(`On townsquare (runtime): ${onTownsquare.size}`);
+  console.log(`Bundled ${bundled}/${roles.length} icons to ${outDir}`);
+  console.log(`  official set: ${bundled - fromTownsquare}, townsquare fallback: ${fromTownsquare}`);
   if (missing.length) console.log(`No icon found for ${missing.length}: ${missing.join(', ')}`);
   if (miscoloured.length) {
     console.warn(`\nWARNING — icon colour does not match alignment:\n  ${miscoloured.join('\n  ')}`);
