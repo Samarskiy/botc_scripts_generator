@@ -73,7 +73,7 @@ server keeps the key server-side, runs the engine, and serves the client.
 | -------- | ---------------------------------------------------------------- |
 | Client   | React 19, Vite 6, TypeScript                                      |
 | Server   | Node 20+, Express 4, TypeScript (`tsx` for dev, `tsc` for build)  |
-| LLM      | Anthropic SDK (`@anthropic-ai/sdk`), default model `claude-sonnet-4-6` |
+| LLM      | Anthropic SDK (`@anthropic-ai/sdk`), default model `claude-opus-5` |
 | PDF      | `pdfkit`, bundled Noto Sans (Latin + Cyrillic), official role icons |
 | Shared   | `@botc/shared` workspace package — domain types + bundled data   |
 
@@ -147,7 +147,7 @@ You can sanity-check the backend without the browser:
 
 ```bash
 curl http://localhost:5174/api/health
-# {"status":"ok","hasApiKey":true,"model":"claude-sonnet-4-6"}
+# {"status":"ok","hasApiKey":true,"model":"claude-opus-5"}
 ```
 
 ### Run (production)
@@ -204,7 +204,7 @@ All settings are environment variables (see `.env.example`):
 | ---------------------------- | -------------------- | --------------------------------------------- |
 | `ANTHROPIC_API_KEY`          | —                    | **Required.** Your Anthropic API key.         |
 | `PORT`                       | `5174`               | Backend port.                                 |
-| `BOTC_MODEL`                 | `claude-sonnet-4-6`  | Claude model id used for generation/evaluation. |
+| `BOTC_MODEL`                 | `claude-opus-5`      | Claude model id used for generation/evaluation. Judging balance is the hard part, so this defaults to the strongest model; set `claude-sonnet-5` or `claude-sonnet-4-6` to spend less. |
 | `BOTC_BALANCE_THRESHOLD`     | `8.0`                | Overall score (0–10) at/above which the loop stops. |
 | `BOTC_MAX_ITERATIONS`        | `2`                  | Max refinement iterations after the first try. |
 | `BOTC_AUTO_REPAIR_ATTEMPTS`  | `2`                  | Retries when the model returns an invalid script. |

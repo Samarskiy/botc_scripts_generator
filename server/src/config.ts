@@ -9,7 +9,8 @@ loadDotenv({ path: fileURLToPath(new URL('../../.env', import.meta.url)) });
 export const config = {
   port: Number(process.env.PORT ?? 5174),
   anthropicApiKey: process.env.ANTHROPIC_API_KEY ?? '',
-  model: process.env.BOTC_MODEL ?? 'claude-sonnet-4-6',
+  /** Balance judgement is the hard part here, so default to the strongest model. */
+  model: process.env.BOTC_MODEL ?? 'claude-opus-5',
   /** Overall balance score (0–10) at or above which the loop stops. */
   balanceThreshold: Number(process.env.BOTC_BALANCE_THRESHOLD ?? 8.0),
   /** Max refinement iterations after the initial generation. */
